@@ -687,16 +687,16 @@ namespace ZombieLand
 
 		// aim chainsaw
 		//
-		[HarmonyPatch(typeof(PawnRenderer))]
-		[HarmonyPatch(nameof(PawnRenderer.DrawEquipment))]
+		[HarmonyPatch(typeof(PawnRenderUtility))]
+		[HarmonyPatch(nameof(PawnRenderUtility.DrawEquipmentAndApparelExtras))]
 		static class PawnRenderer_DrawEquipment_Patch
 		{
-			static bool Prefix(PawnRenderer __instance, Pawn ___pawn, Vector3 rootLoc, Rot4 pawnRotation, PawnRenderFlags flags)
+			static bool Prefix(Pawn pawn, Vector3 rootLoc, Rot4 pawnRotation, PawnRenderFlags flags)
 			{
-				if (___pawn.equipment?.Primary is not Chainsaw chainsaw)
+				if (pawn.equipment?.Primary is not Chainsaw chainsaw)
 					return true;
 
-				if (___pawn.Dead || ___pawn.Spawned == false)
+				if (pawn.Dead || pawn.Spawned == false)
 					return true;
 				if ((flags & PawnRenderFlags.NeverAimWeapon) != PawnRenderFlags.None)
 					return true;
@@ -709,12 +709,12 @@ namespace ZombieLand
 				var angle = chainsaw.angle;
 
 				var vector = new Vector3(0f, (pawnRotation == Rot4.North) ? (-0.0028957527f) : 0.03474903f, 0f);
-				var equipmentDrawDistanceFactor = ___pawn.ageTracker.CurLifeStage.equipmentDrawDistanceFactor;
+				var equipmentDrawDistanceFactor = pawn.ageTracker.CurLifeStage.equipmentDrawDistanceFactor;
 				vector += rootLoc + new Vector3(0f, 0f, 0.4f + CustomDefs.Chainsaw.equippedDistanceOffset).RotatedBy(angle) * equipmentDrawDistanceFactor;
 
-				__instance.DrawEquipmentAiming(chainsaw, vector, angle);
+                PawnRenderUtility.DrawEquipmentAiming(chainsaw, vector, angle);
 				if (Find.TickManager.Paused)
-					___pawn.rotationTracker.Face(vector);
+					pawn.rotationTracker.Face(vector);
 
 				return false;
 			}
