@@ -4,11 +4,11 @@ using Verse;
 
 namespace ZombieLand
 {
-	[HarmonyPatch(typeof(PawnGraphicSet))]
+	[HarmonyPatch(typeof(PawnRenderer))]
 	[HarmonyPatch(MethodType.Constructor, typeof(Pawn))]
 	static class PawnGraphicSet_Constructor_With_Pawn_Patch
 	{
-		static void Postfix(PawnGraphicSet __instance)
+		static void Postfix(PawnRenderer __instance)
 		{
 			__instance.flasher = new ZombieDamageFlasher(__instance.pawn);
 		}

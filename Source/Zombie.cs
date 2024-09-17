@@ -345,13 +345,12 @@ namespace ZombieLand
 				worldPawns.RemovePawn(this);
 
 			// our graphics
-			var head = Drawer.renderer.graphics.headGraphic as VariableGraphic;
+			
+			var head = Drawer.renderer.HeadGraphic as VariableGraphic;
 			head?.Dispose();
-			Drawer.renderer.graphics.headGraphic = null;
 
-			var naked = Drawer.renderer.graphics.nakedGraphic as VariableGraphic;
+			var naked = Drawer.renderer.BodyGraphic as VariableGraphic;
 			naked?.Dispose();
-			Drawer.renderer.graphics.nakedGraphic = null;
 
 			// vanilla graphics
 			// Drawer.renderer.graphics.furCoveredGraphic.UnCache();
@@ -387,7 +386,7 @@ namespace ZombieLand
 				bombTickingInterval = -1f;
 				bombWillGoOff = false;
 				hasTankyShield = -1f;
-				_ = Drawer.renderer.graphics.apparelGraphics.RemoveAll(record => record.sourceApparel?.def == CustomDefs.Apparel_BombVest);
+				Drawer.renderer.graphics.apparelGraphics.RemoveAll(record => record.sourceApparel?.def == CustomDefs.Apparel_BombVest);
 				Map.GetComponent<TickManager>()?.AddExplosion(Position);
 			}
 

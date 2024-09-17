@@ -380,7 +380,7 @@ namespace ZombieLand
 						}
 
 						GUI.BeginGroup(zlRect);
-						Text.Anchor = TextAnchor.UpperRight;
+                        Text.Anchor = TextAnchor.UpperRight;
 						var rect = zlRect.AtZero();
 						rect.xMax -= rightMargin;
 						Widgets.Label(rect, zombieWeatherString);
@@ -2789,6 +2789,7 @@ namespace ZombieLand
 
 		// make zombies without head not have a headstump
 		//
+		/* The whole drawing system has changed, more pain that it is worth for now
 		[HarmonyPatch(typeof(PawnGraphicSet))]
 		[HarmonyPatch(nameof(PawnGraphicSet.HeadMatAt))]
 		static class PawnGraphicSet_HeadMatAt_Patch
@@ -2810,6 +2811,7 @@ namespace ZombieLand
 				__result = mat;
 			}
 		}
+		*/
 
 		// update electrical zombie humming
 		//
@@ -2863,9 +2865,9 @@ namespace ZombieLand
 			static readonly Mesh shieldMesh_flipped = MeshPool.GridPlaneFlip(new Vector2(2f, 2f));
 
 			[HarmonyPriority(Priority.First)]
-			static bool Prefix(PawnRenderer __instance, Vector3 drawLoc)
+			static bool Prefix(PawnRenderer __instance, Pawn ___pawn, Vector3 drawLoc)
 			{
-				if (__instance.graphics.pawn is not Zombie zombie)
+				if (___pawn is not Zombie zombie)
 					return true;
 
 				if (zombie.needsGraphics)
@@ -2894,7 +2896,7 @@ namespace ZombieLand
 			}
 
 			[HarmonyPriority(Priority.First)]
-			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, Pawn ___pawn)
 			{
 				var list = instructions.ToList();
 				var ret = list.Last();
@@ -2902,15 +2904,15 @@ namespace ZombieLand
 					Error("Expected ret in PawnRenderer.RenderPawnAt");
 				ret.opcode = OpCodes.Ldarg_0;
 				list.Add(new CodeInstruction(OpCodes.Ldarg_1));
-				list.Add(CodeInstruction.Call(() => RenderExtras(null, Vector3.zero)));
+				list.Add(CodeInstruction.Call(() => RenderExtras(null, ___pawn, Vector3.zero)));
 				list.Add(new CodeInstruction(OpCodes.Ret));
 				return list;
 			}
 
 			[HarmonyPriority(Priority.First)]
-			static void Postfix(PawnRenderer __instance, Vector3 drawLoc)
+			static void Postfix(PawnRenderer __instance, Pawn ___pawn, Vector3 drawLoc)
 			{
-				if (__instance.graphics.pawn is not Zombie zombie)
+				if (___pawn is not Zombie zombie)
 					return;
 
 				if (zombie.isAlbino && zombie.scream > 0)
@@ -2962,9 +2964,9 @@ namespace ZombieLand
 			}
 
 			// we don't use a postfix so that someone that patches and skips RenderPawnAt will also skip RenderExtras
-			static void RenderExtras(PawnRenderer renderer, Vector3 drawLoc)
+			static void RenderExtras(PawnRenderer renderer, Pawn ___pawn, Vector3 drawLoc)
 			{
-				if (renderer.graphics.pawn is not Zombie zombie)
+				if (___pawn is not Zombie zombie)
 					return;
 				if (zombie.state == ZombieState.Emerging || zombie.GetPosture() != PawnPosture.Standing)
 					return;
@@ -3151,7 +3153,8 @@ namespace ZombieLand
 						var glowLoc = drawLoc;
 						glowLoc.y -= Altitudes.AltInc / 2f;
 
-						var mesh = MeshPool.humanlikeBodySet.MeshAt(orientation);
+						var mesh_set = new GraphicMeshSet(___pawn.BodySize);
+						var mesh = mesh_set.MeshAt(orientation);
 						var glowingMaterials = Constants.ELECTRIC_GLOWING[zombie.story.bodyType];
 						var idx = orientation == Rot4.East || orientation == Rot4.West ? 0 : (orientation == Rot4.North ? 1 : 2);
 						GraphicToolbox.DrawScaledMesh(mesh, glowingMaterials[idx], glowLoc, Quaternion.identity, 1f, 1f);
@@ -3371,25 +3374,29 @@ namespace ZombieLand
 
 		// patch for giving zombies accessories like bomb vests or tanky suits
 		//
-		[HarmonyPatch(typeof(PawnGraphicSet))]
-		[HarmonyPatch(nameof(PawnGraphicSet.ResolveApparelGraphics))]
+		[HarmonyPatch(typeof(PawnRenderNode_Apparel))]
+		[HarmonyPatch(nameof(PawnRenderNode_Apparel.GraphicFor))]
 		static class PawnGraphicSet_ResolveApparelGraphics_Patch
 		{
 			[HarmonyPriority(Priority.Last)]
-			static void Postfix(PawnGraphicSet __instance)
-			{
-				if (__instance.pawn is not Zombie zombie)
-					return;
+			static IEnumerable<Verse.Graphic> Postfix(PawnRenderNode_Apparel __instance, Pawn pawn, Apparel ___apparel)
+            {
+                if (pawn is not Zombie zombie)
+                {
+                    yield break;
+                }
 
-				if (zombie.IsSuicideBomber)
-				{
-					var apparel = new Apparel() { def = CustomDefs.Apparel_BombVest };
-					if (__instance.apparelGraphics.Any(a => a.sourceApparel.def == CustomDefs.Apparel_BombVest) == false)
-						if (ApparelGraphicRecordGetter.TryGetGraphicApparel(apparel, BodyTypeDefOf.Hulk, out var record))
-							__instance.apparelGraphics.Add(record);
-				}
-			}
-		}
+                if (!zombie.IsSuicideBomber)
+                {
+                    yield break;
+                }
+
+                var vestApparel = new Apparel() { def = CustomDefs.Apparel_BombVest };
+
+                if (ApparelGraphicRecordGetter.TryGetGraphicApparel(vestApparel, BodyTypeDefOf.Hulk, out var record))
+                    yield return record.graphic;
+            }
+        }
 
 		// patch to inform zombie generator that apparel texture could not load
 		[HarmonyPatch(typeof(Graphic_Multi))]
@@ -5120,7 +5127,7 @@ namespace ZombieLand
 		// patch to allow zombies to occupy the same spot without collision
 		//
 		[HarmonyPatch(typeof(Pawn_PathFollower))]
-		[HarmonyPatch(nameof(Pawn_PathFollower.WillCollideWithPawnOnNextPathCell))]
+		[HarmonyPatch(nameof(Pawn_PathFollower.WillCollideWithPawnAt))]
 		static class Pawn_PathFollower_WillCollideWithPawnOnNextPathCell_Patch
 		{
 			[HarmonyPriority(Priority.First)]

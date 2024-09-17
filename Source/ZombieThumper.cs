@@ -303,9 +303,9 @@ namespace ZombieLand
 			GenDraw.DrawFieldEdges(ringDrawCells.ToList(), Color.white, null);
 		}
 
-		public override void Draw()
+		public override void DrawAt(Vector3 drawLoc, bool flip)
 		{
-			base.Draw();
+			base.DrawAt(drawLoc, flip);
 
 			float polePosition = 0f;
 			float impactRingColor = 0f;

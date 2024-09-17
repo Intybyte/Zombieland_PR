@@ -168,7 +168,7 @@ namespace ZombieLand
 			return elementSizes[count];
 		}
 
-		public override void Draw()
+		public override void DrawAt(Vector3 drawLoc, bool flip)
 		{
 			var offset = new Vector3(centerX, 0, centerZ);
 			Graphics.DrawMesh(debugMesh, DrawPos + offset + new Vector3(0, -0.0001f, 0), Quaternion.identity, debugMaterial, 0);

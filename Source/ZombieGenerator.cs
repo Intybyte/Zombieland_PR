@@ -236,8 +236,6 @@ namespace ZombieLand
 							return false;
 						if (def == ThingDefOf.Apparel_ShieldBelt)
 							return false;
-						if (def == ThingDefOf.Apparel_SmokepopBelt)
-							return false;
 						if (def.thingClass?.Name.Contains("ApparelHolographic") ?? false)
 							return false; // SoS
 						var path = def.apparel.wornGraphicPath;

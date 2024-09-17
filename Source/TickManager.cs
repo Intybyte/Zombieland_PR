@@ -252,7 +252,7 @@ namespace ZombieLand
 			}
 		}
 
-		static readonly Mesh headMesh = MeshPool.humanlikeHeadSet.MeshAt(Rot4.South);
+		static readonly Mesh headMesh = new GraphicMeshSet(1.5f).MeshAt(Rot4.South);
 		public override void MapComponentUpdate()
 		{
 			foreach (var head in victimHeads)

@@ -533,7 +533,7 @@ namespace ZombieLand
 				if (newLabel.Length > 28)
 					newLabel = newLabel.Substring(0, 28);
 				if (newLabel != area.Label)
-					area.SetLabel(newLabel);
+					area.BaseLabel = newLabel;
 			}
 			else
 			{

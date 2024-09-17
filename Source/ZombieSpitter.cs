@@ -83,10 +83,10 @@ namespace ZombieLand
 				CustomDefs.ZombiesRising.PlayOneShotOnCamera(null);
 		}
 
-		public override void Draw()
+		public override void DrawAt(Vector3 drawLoc, bool flip)
 		{
 			mesh ??= MeshMakerPlanes.NewPlaneMesh(3f);
-			var v = new Vector3(0.1f, 0f, 0f) * Mathf.Sin(2 * Mathf.PI * Drawer.tweener.MovedPercent());
+			var v = new Vector3(0.1f, 0f, 0f) * Mathf.Sin(2 * Mathf.PI * MovementUtils.MovedPercent(this));
 			var h = new Vector3(0f, 0.01f, 0f);
 			var materials = aggressive ? Constants.SpitterAggressive : Constants.Spitter;
 			Graphics.DrawMesh(mesh, DrawPos + v, Quaternion.identity, materials[0], 0);
@@ -94,7 +94,7 @@ namespace ZombieLand
 			Graphics.DrawMesh(mesh, DrawPos - v + h + h, Quaternion.identity, materials[2], 0);
 		}
 
-		public override string GetInspectString()
+        public override string GetInspectString()
 		{
 			var result = new StringBuilder();
 			var spitter = jobs.curDriver as JobDriver_Spitter;
